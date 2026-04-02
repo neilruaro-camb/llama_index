@@ -324,28 +324,24 @@ class CambToolSpec(BaseToolSpec):
             status.run_id
         )
 
-        out: Dict[str, Any] = {
-            "text": getattr(transcription, "text", ""),
-            "segments": [],
-            "speakers": [],
-        }
-        if hasattr(transcription, "segments"):
-            for seg in transcription.segments:
-                out["segments"].append(
-                    {
-                        "start": seg.start,
-                        "end": seg.end,
-                        "text": seg.text,
-                        "speaker": seg.speaker,
-                    }
-                )
-        if hasattr(transcription, "speakers"):
-            out["speakers"] = list(transcription.speakers)
-        elif out["segments"]:
-            out["speakers"] = list(
-                {s["speaker"] for s in out["segments"] if s.get("speaker")}
+        segments = []
+        for seg in transcription.transcript:
+            segments.append(
+                {
+                    "start": seg.start,
+                    "end": seg.end,
+                    "text": seg.text,
+                    "speaker": seg.speaker,
+                }
             )
+        
+        out: Dict[str, Any] = {
+            "text": " ".join(seg["text"] for seg in segments),
+            "segments": segments,
+            "speakers": list({seg["speaker"] for seg in segments if seg.get("speaker")}),
+        }
         return json.dumps(out, indent=2)
+
 
     # ------------------------------------------------------------------
     # 4. Translated TTS
